@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>너구리 게임</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .login-screen, .game-screen, .gameover-screen {
+            display: none;
+        }
+
+        .login-screen.active, .game-screen.active, .gameover-screen.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .game-icon {
+            text-align: center;
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        #gameCanvas {
+            border: 4px solid #f59e0b;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            background: #2d3748;
+        }
+
+        .instructions {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .leaderboard {
+            margin-top: 20px;
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .leaderboard h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .leaderboard-item:nth-child(1) {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        }
+
+        .leaderboard-item:nth-child(2) {
+            background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+        }
+
+        .leaderboard-item:nth-child(3) {
+            background: linear-gradient(135deg, #cd7f32 0%, #d4a574 100%);
+        }
+
+        .rank {
+            font-weight: bold;
+            font-size: 18px;
+            width: 30px;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .player-id {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .score-info {
+            text-align: right;
+        }
+
+        .score {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .level {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .final-score {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .final-score-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .empty-leaderboard {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+
+        .player-display {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 로그인 화면 -->
+        <div class="login-screen active" id="loginScreen">
+            <div class="game-icon">🦝</div>
+            <h1>너구리 게임</h1>
+            <p class="subtitle">로그인하여 게임을 시작하세요!</p>
+
+            <div class="input-group">
+                <label for="userName">이름</label>
+                <input type="text" id="userName" placeholder="이름을 입력하세요">
+            </div>
+
+            <div class="input-group">
+                <label for="studentId">학번</label>
+                <input type="text" id="studentId" placeholder="학번을 입력하세요">
+            </div>
+
+            <button class="btn-primary" id="loginBtn" disabled>게임 시작</button>
+            <button class="btn-secondary" id="showLeaderboardBtn">순위표 보기</button>
+
+            <div class="leaderboard" id="leaderboardLogin" style="display: none;">
+                <h3>🏆 명예의 전당</h3>
+                <div id="leaderboardListLogin"></div>
+            </div>
+        </div>
+
+        <!-- 게임 화면 -->
+        <div class="game-screen" id="gameScreen">
+            <div class="game-info">
+                <div class="info-item">⭐ 레벨: <span id="level">1</span></div>
+                <div class="info-item">🏆 점수: <span id="score">0</span></div>
+                <div class="info-item">❤️ 생명: <span id="lives">3</span></div>
+                <div class="info-item">🍎 과일: <span id="fruits">7</span></div>
+            </div>
+
+            <canvas id="gameCanvas" width="480" height="480"></canvas>
+
+            <div class="player-display" id="playerDisplay"></div>
+            <div class="instructions">⬆️⬇️⬅️➡️ 화살표 키로 너구리를 조종하세요!</div>
+        </div>
+
+        <!-- 게임 오버 화면 -->
+        <div class="gameover-screen" id="gameoverScreen">
+            <div class="game-icon">💀</div>
+            <h1>게임 오버!</h1>
+            
+            <div class="final-score">
+                <p>최종 점수</p>
+                <div class="final-score-value" id="finalScore">0</div>
+                <p id="finalLevel">레벨 1</p>
+            </div>
+
+            <button class="btn-success" id="replayBtn">다시 플레이</button>
+            <button class="btn-secondary" id="logoutBtn">로그아웃</button>
+
+            <div class="leaderboard">
+                <h3>🏆 명예의 전당</h3>
+                <div id="leaderboardListGame"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase 설정 (실제 프로젝트에서는 여기에 Firebase 설정을 넣으세요)
+        var FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDsmgFuC6RUN2C2Br5o_AD1bCtftTVSrqM",
+  authDomain: "racoon-6bdf9.firebaseapp.com",
+  databaseURL: "https://racoon-6bdf9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "racoon-6bdf9",
+  storageBucket: "racoon-6bdf9.firebasestorage.app",
+  messagingSenderId: "1038545707676",
+  appId: "1:1038545707676:web:9cc0416a9b5f6246860359"
+};
+
+        // 게임 상수
+        var GRID_SIZE = 15;
+        var CELL_SIZE = 32;
+        var GAME_SPEED = 150;
+
+        // 게임 변수
+        var canvas, ctx;
+        var raccoon = { x: 1, y: 1 };
+        var direction = { x: 1, y: 0 };
+        var fruits = [];
+        var obstacles = [];
+        var score = 0;
+        var level = 1;
+        var lives = 3;
+        var gameInterval;
+        var userName = '';
+        var studentId = '';
+        var leaderboard = [];
+
+        // 화면 요소
+        var loginScreen = document.getElementById('loginScreen');
+        var gameScreen = document.getElementById('gameScreen');
+        var gameoverScreen = document.getElementById('gameoverScreen');
+        var userNameInput = document.getElementById('userName');
+        var studentIdInput = document.getElementById('studentId');
+        var loginBtn = document.getElementById('loginBtn');
+
+        // 로컬 스토리지에서 순위표 로드
+        function loadLeaderboard() {
+            var stored = localStorage.getItem('raccoonGameLeaderboard');
+            if (stored) {
+                leaderboard = JSON.parse(stored);
+            }
+            updateLeaderboardDisplay();
+        }
+
+        // 순위표 저장
+        function saveLeaderboard() {
+            localStorage.setItem('raccoonGameLeaderboard', JSON.stringify(leaderboard));
+        }
+
+        // 점수 저장
+        function saveScore(finalScore, finalLevel) {
+            var newEntry = {
+                name: userName,
+                studentId: studentId,
+                score: finalScore,
+                level: finalLevel,
+                date: new Date().toLocaleDateString('ko-KR')
+            };
+
+            leaderboard.push(newEntry);
+            leaderboard.sort(function(a, b) { return b.score - a.score; });
+            leaderboard = leaderboard.slice(0, 10);
+            saveLeaderboard();
+            updateLeaderboardDisplay();
+        }
+
+        // 순위표 표시 업데이트
+        function updateLeaderboardDisplay() {
+            var lists = [
+                document.getElementById('leaderboardListLogin'),
+                document.getElementById('leaderboardListGame')
+            ];
+
+            lists.forEach(function(list) {
+                if (!list) return;
+                
+                if (leaderboard.length === 0) {
+                    list.innerHTML = '<div class="empty-leaderboard">아직 기록이 없습니다</div>';
+                } else {
+                    list.innerHTML = leaderboard.map(function(entry, index) {
+                        return '<div class="leaderboard-item">' +
+                            '<span class="rank">' + (index + 1) + '</span>' +
+                            '<div class="player-info">' +
+                                '<div class="player-name">' + entry.name + '</div>' +
+                                '<div class="player-id">' + entry.studentId + '</div>' +
+                            '</div>' +
+                            '<div class="score-info">' +
+                                '<div class="score">' + entry.score + '점</div>' +
+                                '<div class="level">Lv.' + entry.level + '</div>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
+                }
+            });
+        }
+
+        // 입력 검증
+        function validateInputs() {
+            var nameValid = userNameInput.value.trim().length > 0;
+            var idValid = studentIdInput.value.trim().length > 0;
+            loginBtn.disabled = !(nameValid && idValid);
+        }
+
+        userNameInput.addEventListener('input', validateInputs);
+        studentIdInput.addEventListener('input', validateInputs);
+
+        // 로그인
+        loginBtn.addEventListener('click', function() {
+            userName = userNameInput.value.trim();
+            studentId = studentIdInput.value.trim();
+            
+            loginScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+            document.getElementById('playerDisplay').textContent = '플레이어: ' + userName + ' (' + studentId + ')';
+            
+            initGame();
+        });
+
+        // 순위표 토글
+        document.getElementById('showLeaderboardBtn').addEventListener('click', function() {
+            var leaderboardDiv = document.getElementById('leaderboardLogin');
+            leaderboardDiv.style.display = leaderboardDiv.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // 게임 초기화
+        function initGame() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+
+            raccoon = { x: 1, y: 1 };
+            direction = { x: 1, y: 0 };
+            score = 0;
+            level = 1;
+            lives = 3;
+            
+            generateObstacles();
+            generateFruits();
+            updateDisplay();
+            
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, GAME_SPEED);
+            
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
+        // 장애물 생성
+        function generateObstacles() {
+            obstacles = [];
+            var obstacleCount = Math.min(level * 2, 15);
+            
+            for (var i = 0; i < obstacleCount; i++) {
+                var pos;
+                var attempts = 0;
+                do {
+                    pos = {
+                        x: Math.floor(Math.random() * (GRID_SIZE - 2)) + 1,
+                        y: Math.floor(Math.random() * (GRID_SIZE - 2)) + 1
+                    };
+                    attempts++;
+                } while (
+                    attempts < 100 &&
+                    ((pos.x === raccoon.x && pos.y === raccoon.y) ||
+                     obstacles.some(function(o) { return o.x === pos.x && o.y === pos.y; }) ||
+                     (pos.x === 1 && pos.y === 1))
+                );
+                
+                if (attempts < 100) {
+                    obstacles.push(pos);
+                }
+            }
+        }
+
+        // 과일 생성
+        function generateFruits() {
+            fruits = [];
+            var fruitCount = 3 + level;
+            
+            for (var i = 0; i < fruitCount; i++) {
+                var pos;
+                var attempts = 0;
+                do {
+                    pos = {
+                        x: Math.floor(Math.random() * (GRID_SIZE - 2)) + 1,
+                        y: Math.floor(Math.random() * (GRID_SIZE - 2)) + 1
+                    };
+                    attempts++;
+                } while (
+                    attempts < 100 &&
+                    ((pos.x === raccoon.x && pos.y === raccoon.y) ||
+                     obstacles.some(function(o) { return o.x === pos.x && o.y === pos.y; }) ||
+                     fruits.some(function(f) { return f.x === pos.x && f.y === pos.y; }))
+                );
+                
+                if (attempts < 100) {
+                    fruits.push(pos);
+                }
+            }
+        }
+
+        // 키보드 입력 처리
+        function handleKeyPress(e) {
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (direction.y === 0) direction = { x: 0, y: -1 };
+                    break;
+                case 'ArrowDown':
+                    if (direction.y === 0) direction = { x: 0, y: 1 };
+                    break;
+                case 'ArrowLeft':
+                    if (direction.x === 0) direction = { x: -1, y: 0 };
+                    break;
+                case 'ArrowRight':
+                    if (direction.x === 0) direction = { x: 1, y: 0 };
+                    break;
+            }
+        }
+
+        // 게임 루프
+        function gameLoop() {
+            var newPos = {
+                x: raccoon.x + direction.x,
+                y: raccoon.y + direction.y
+            };
+
+            // 벽 충돌 체크
+            if (newPos.x < 0 || newPos.x >= GRID_SIZE || newPos.y < 0 || newPos.y >= GRID_SIZE) {
+                loseLife();
+                return;
+            }
+
+            // 장애물 충돌 체크
+            if (obstacles.some(function(o) { return o.x === newPos.x && o.y === newPos.y; })) {
+                loseLife();
+                return;
+            }
+
+            raccoon = newPos;
+
+            // 과일 먹기
+            var fruitIndex = fruits.findIndex(function(f) { return f.x === raccoon.x && f.y === raccoon.y; });
+            if (fruitIndex !== -1) {
+                fruits.splice(fruitIndex, 1);
+                score += 10 * level;
+                
+                if (fruits.length === 0) {
+                    level++;
+                    generateObstacles();
+                    generateFruits();
+                }
+            }
+
+            updateDisplay();
+            draw();
+        }
+
+        // 생명 감소
+        function loseLife() {
+            lives--;
+            if (lives <= 0) {
+                gameOver();
+            } else {
+                raccoon = { x: 1, y: 1 };
+                direction = { x: 1, y: 0 };
+            }
+            updateDisplay();
+        }
+
+        // 게임 오버
+        function gameOver() {
+            clearInterval(gameInterval);
+            document.removeEventListener('keydown', handleKeyPress);
+            
+            saveScore(score, level);
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalLevel').textContent = '레벨 ' + level;
+            
+            gameScreen.classList.remove('active');
+            gameoverScreen.classList.add('active');
+        }
+
+        // 화면 표시 업데이트
+        function updateDisplay() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('score').textContent = score;
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('fruits').textContent = fruits.length;
+        }
+
+        // 게임 그리기
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 벽 그리기
+            ctx.fillStyle = '#92400e';
+            for (var x = 0; x < GRID_SIZE; x++) {
+                ctx.fillRect(x * CELL_SIZE, 0, CELL_SIZE, CELL_SIZE);
+                ctx.fillRect(x * CELL_SIZE, (GRID_SIZE - 1) * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            }
+            for (var y = 1; y < GRID_SIZE - 1; y++) {
+                ctx.fillRect(0, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                ctx.fillRect((GRID_SIZE - 1) * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            }
+
+            // 바닥 그리기
+            ctx.fillStyle = '#86efac';
+            for (var x = 1; x < GRID_SIZE - 1; x++) {
+                for (var y = 1; y < GRID_SIZE - 1; y++) {
+                    ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                }
+            }
+
+            // 그리드 선 그리기
+            ctx.strokeStyle = '#bbf7d0';
+            ctx.lineWidth = 1;
+            for (var x = 1; x < GRID_SIZE - 1; x++) {
+                for (var y = 1; y < GRID_SIZE - 1; y++) {
+                    ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                }
+            }
+
+            // 장애물 그리기
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            obstacles.forEach(function(obs) {
+                ctx.fillText('🌳', obs.x * CELL_SIZE + CELL_SIZE/2, obs.y * CELL_SIZE + CELL_SIZE/2);
+            });
+
+            // 과일 그리기
+            fruits.forEach(function(fruit) {
+                ctx.fillText('🍎', fruit.x * CELL_SIZE + CELL_SIZE/2, fruit.y * CELL_SIZE + CELL_SIZE/2);
+            });
+
+            // 너구리 그리기
+            ctx.fillText('🦝', raccoon.x * CELL_SIZE + CELL_SIZE/2, raccoon.y * CELL_SIZE + CELL_SIZE/2);
+        }
+
+        // 다시 시작
+        document.getElementById('replayBtn').addEventListener('click', function() {
+            gameoverScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+            initGame();
+        });
+
+        // 로그아웃
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            gameoverScreen.classList.remove('active');
+            loginScreen.classList.add('active');
+            userName = '';
+            studentId = '';
+            userNameInput.value = '';
+            studentIdInput.value = '';
+            validateInputs();
+        });
+
+        // 초기화
+        loadLeaderboard();
+    </script>
+</body>
+</html>
